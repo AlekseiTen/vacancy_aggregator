@@ -27,5 +27,6 @@ async def main():
         await save_vacancy(prepared_sj, SJ, session)
         await save_vacancy(prepared_mts, MTS, session)
 
+
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,5 +1,5 @@
-from vacancy_aggregator.app.core.celery_app import celery_app
-import vacancy_aggregator.app.core.tasks
+from vacancy_aggregator.app.celery.celery_app import celery_app
+import vacancy_aggregator.app.celery.tasks
 
 if __name__ == '__main__':
     # Передаем явно в argv команду worker и другие параметры

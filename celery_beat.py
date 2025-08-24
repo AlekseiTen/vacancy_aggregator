@@ -1,4 +1,4 @@
-from vacancy_aggregator.app.core.celery_app import celery_app
+from vacancy_aggregator.app.celery.celery_app import celery_app
 
 if __name__ == '__main__':
     # Запускаем beat с автозагрузкой расписания
