@@ -3,6 +3,7 @@ from vacancy_aggregator.app.db.models import AsyncSessionLocal, HH, SJ, MTS
 from telegram import Update
 from telegram.ext import ContextTypes
 
+
 async def get_all_vacansies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with AsyncSessionLocal() as session:
         hh_result = await session.execute(select(HH).where(HH.is_sent == False))

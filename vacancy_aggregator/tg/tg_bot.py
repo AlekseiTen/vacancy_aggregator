@@ -19,6 +19,7 @@ from telegram.ext import (
 
 START, SHOW_VACANCIES = range(2)  # Стейты для ConversationHandler
 
+
 # сохранение пользователя в бд
 async def save_user(update: Update):
     chat_id = update.effective_chat.id

@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 celery_app = Celery(
     "vacancy_aggregator",
@@ -8,12 +9,17 @@ celery_app = Celery(
 
 celery_app.conf.task_default_queue = "vacancy_aggregator_queue"
 celery_app.conf.timezone = "Europe/Moscow"
+celery_app.conf.enable_utc = True
 
 # Настройка расписания
 celery_app.conf.beat_schedule = {
-    'send-unsent-vacancies-every-minute': {
+    'parse-twice-daily': {
+        'task': 'vacancy_aggregator.app.celery.tasks.daily_parse_and_save_vacancies',
+        'schedule': crontab(minute=0, hour='9,21'),  # запускать в 9:00 и 21:00 по Москве
+    },
+    'send-twice-daily-after-parse': {
         'task': 'vacancy_aggregator.app.celery.tasks.send_unsent_hh_vacancies_task',
-        'schedule': 60.0,  # через 60 секунд, т.е. каждую минуту
+        'schedule': crontab(minute=30, hour='9,21'),  # через 30 минут после парсинга
     },
 }
 
