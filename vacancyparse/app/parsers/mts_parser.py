@@ -1,8 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 
+# Константа с URL для парсинга
+MTS_CAREER_URL = 'https://mts.ai/ru/career/'
 
-def mts_get_vacancies(url='https://mts.ai/ru/career/'):
+def mts_get_vacancies(url=MTS_CAREER_URL):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -17,7 +19,7 @@ def mts_get_vacancies(url='https://mts.ai/ru/career/'):
         # Профессия из атрибута data-profession
         profession = vacancy.get('data-profession', 'Нет данных о профессии')
 
-        # Ссылка на вакансию — ищем тег <a> с классом hr_apply p-hr__vacancy-block_link
+        # Ссылка на вакансию
         apply_link_tag = vacancy.find('a', class_='hr_apply p-hr__vacancy-block_link')
         url = apply_link_tag['href'] if apply_link_tag and apply_link_tag.has_attr('href') else 'Нет ссылки'
 

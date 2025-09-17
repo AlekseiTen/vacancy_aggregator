@@ -1,12 +1,13 @@
 import asyncio
 
-from vacancy_aggregator.app.db.models import AsyncSessionLocal, HH, SJ, MTS
-from vacancy_aggregator.app.parsers.hh_vacancies import hh_get_vacancies
-from vacancy_aggregator.app.parsers.mts_parser import mts_get_vacancies
-from vacancy_aggregator.app.parsers.super_job_vacancies import sj_get_vacancies
-from vacancy_aggregator.app.schemas.prepare_functions import hh_prepare_vacancies, sj_prepare_vacancies, \
+from vacancyparse.app.db.database import AsyncSessionLocal
+from vacancyparse.app.db.models import HH, SJ, MTS
+from vacancyparse.app.parsers.hh_vacancies import hh_get_vacancies
+from vacancyparse.app.parsers.mts_parser import mts_get_vacancies
+from vacancyparse.app.parsers.super_job_vacancies import sj_get_vacancies
+from vacancyparse.app.schemas.prepare_functions import hh_prepare_vacancies, sj_prepare_vacancies, \
     mts_prepare_vacancies
-from vacancy_aggregator.app.schemas.vacancy_saver import save_vacancy
+from vacancyparse.app.repositories.vacancy_saver import save_vacancy
 
 
 async def main():

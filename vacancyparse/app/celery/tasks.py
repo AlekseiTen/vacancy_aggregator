@@ -1,18 +1,21 @@
 from celery import shared_task
+import os
+from dotenv import load_dotenv
 import asyncio
 from sqlalchemy.future import select
-from vacancy_aggregator.app.db.models import AsyncSessionLocal, HH, TelegramUser, SJ, MTS
+from vacancyparse.app.db.database import AsyncSessionLocal
+from vacancyparse.app.db.models import HH, TelegramUser, SJ, MTS
 from telegram.ext import ApplicationBuilder
-
-from vacancy_aggregator.app.parsers.hh_vacancies import hh_get_vacancies
-from vacancy_aggregator.app.parsers.mts_parser import mts_get_vacancies
-from vacancy_aggregator.app.parsers.super_job_vacancies import sj_get_vacancies
-from vacancy_aggregator.app.schemas.prepare_functions import hh_prepare_vacancies, sj_prepare_vacancies, \
+from vacancyparse.app.parsers.hh_vacancies import hh_get_vacancies
+from vacancyparse.app.parsers.mts_parser import mts_get_vacancies
+from vacancyparse.app.parsers.super_job_vacancies import sj_get_vacancies
+from vacancyparse.app.repositories.vacancy_saver import save_vacancy
+from vacancyparse.app.schemas.prepare_functions import hh_prepare_vacancies, sj_prepare_vacancies, \
     mts_prepare_vacancies
-from vacancy_aggregator.app.schemas.vacancy_saver import save_vacancy
 
-BOT_TOKEN = "7733881445:AAGsKgDKO2utz3tPSMRxiG8AH0KqW-cKz9Q"
+load_dotenv()
 
+TG_TOKEN = os.getenv("BOT_TOKEN")
 
 async def send_to_telegram(vacancy, application):
     # Этот метод должен совместим с вашим кодом бота
@@ -33,7 +36,7 @@ async def send_to_telegram(vacancy, application):
 @shared_task
 def send_unsent_hh_vacancies_task():
     async def inner():
-        app = ApplicationBuilder().token(BOT_TOKEN).build()
+        app = ApplicationBuilder().token(TG_TOKEN).build()
         await app.initialize()  # Инициализация app без polling
 
         async with AsyncSessionLocal() as session:

@@ -1,5 +1,7 @@
 from sqlalchemy import select, update as sqlalchemy_update
-from vacancy_aggregator.app.db.models import AsyncSessionLocal, HH, SJ, MTS
+
+from vacancyparse.app.db.database import AsyncSessionLocal
+from vacancyparse.app.db.models import HH, SJ, MTS
 from telegram import Update
 from telegram.ext import ContextTypes
 

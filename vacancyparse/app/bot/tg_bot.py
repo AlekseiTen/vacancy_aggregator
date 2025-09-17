@@ -1,10 +1,13 @@
 import nest_asyncio
 from sqlalchemy import select
-
-from vacancy_aggregator.app.db.models import TelegramUser, AsyncSessionLocal
-from vacancy_aggregator.app.schemas.get_vacansies import get_all_vacansies
+import os
+from dotenv import load_dotenv
+from vacancyparse.app.db.database import AsyncSessionLocal
+from vacancyparse.app.db.models import TelegramUser
+from vacancyparse.app.service.vacancy_service import get_all_vacansies
 
 nest_asyncio.apply()
+load_dotenv()
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -18,7 +21,7 @@ from telegram.ext import (
 # Состояния для ConversationHandler
 
 START, SHOW_VACANCIES = range(2)  # Стейты для ConversationHandler
-
+TG_TOKEN = os.getenv("TG_TOKEN")
 
 # сохранение пользователя в бд
 async def save_user(update: Update):
@@ -91,7 +94,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Основной запуск бота
 async def main():
-    app = ApplicationBuilder().token("7733881445:AAGsKgDKO2utz3tPSMRxiG8AH0KqW-cKz9Q").build()
+    app = ApplicationBuilder().token(TG_TOKEN).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
@@ -105,11 +108,3 @@ async def main():
     app.add_handler(conv_handler)
     print("Бот запущен...")
     await app.run_polling()
-
-
-if __name__ == "__main__":
-    import nest_asyncio
-    import asyncio
-
-    nest_asyncio.apply()
-    asyncio.run(main())
