@@ -12,83 +12,55 @@ load_dotenv()
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
-    CommandHandler,
+    MessageHandler,
     CallbackQueryHandler,
     ConversationHandler,
-    ContextTypes,
+    filters,
 )
 
 # Состояния для ConversationHandler
+SHOW_VACANCIES = range(1)
 
-START, SHOW_VACANCIES = range(2)  # Стейты для ConversationHandler
 TG_TOKEN = os.getenv("TG_TOKEN")
+
 
 # сохранение пользователя в бд
 async def save_user(update: Update):
     chat_id = update.effective_chat.id
-    user_name = update.effective_user.first_name
-    if not user_name:
-        user_name = update.effective_user.username or "Неизвестный"
+    user_name = update.effective_user.first_name or update.effective_user.username or "Неизвестный"
 
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(TelegramUser).where(TelegramUser.chat_id == str(chat_id)))
+        result = await session.execute(
+            select(TelegramUser).where(TelegramUser.chat_id == str(chat_id))
+        )
         user = result.scalars().first()
 
         if not user:
             user = TelegramUser(chat_id=str(chat_id), user_name=user_name)
             session.add(user)
-        else:
-            user.user_name = user_name
-        await session.commit()
+            await session.commit()
 
 
-# Команда /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("Начать", callback_data='start')],
-        [InlineKeyboardButton("Отмена", callback_data='cancel')]
-    ]
+# Первое сообщение от пользователя
+async def greet_user(update: Update, _):
+    await save_user(update)
+
+    keyboard = [[InlineKeyboardButton("Все вакансии", callback_data="show_vacancies")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Привет! Нажми кнопку, чтобы начать.", reply_markup=reply_markup)
-    return START
 
-
-# Обработка нажатий по кнопкам "Начать" и "Отмена"
-async def start_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    if query.data == 'start':
-        await save_user(update)
-
-        # Показываем кнопку "Все вакансии"
-        keyboard = [
-            [InlineKeyboardButton("Все вакансии", callback_data='show_vacancies')],
-            [InlineKeyboardButton("Отмена", callback_data='cancel')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text="Добро пожаловать! Выберите действие:", reply_markup=reply_markup)
-        return SHOW_VACANCIES
-
-    elif query.data == 'cancel':
-        await query.edit_message_text(text="Диалог отменён.")
-        return ConversationHandler.END
+    await update.message.reply_text(
+        "Добро пожаловать! Нажми кнопку, чтобы посмотреть вакансии:",
+        reply_markup=reply_markup,
+    )
+    return SHOW_VACANCIES
 
 
 # Обработка кнопки "Все вакансии"
-async def show_vacancies_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def show_vacancies_handler(update: Update, context):
     query = update.callback_query
     await query.answer()
 
-    # Ваша функция получения вакансий
     await get_all_vacansies(update, context)
-
-    return ConversationHandler.END
-
-
-# Отмена вне зависимости от состояния
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Диалог отменён.")
     return ConversationHandler.END
 
 
@@ -97,12 +69,13 @@ async def main():
     app = ApplicationBuilder().token(TG_TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[MessageHandler(filters.ALL, greet_user)],  # реагируем на первое сообщение
         states={
-            START: [CallbackQueryHandler(start_button_handler)],
-            SHOW_VACANCIES: [CallbackQueryHandler(show_vacancies_handler, pattern='show_vacancies')],
+            SHOW_VACANCIES: [
+                CallbackQueryHandler(show_vacancies_handler, pattern="show_vacancies")
+            ],
         },
-        fallbacks=[CommandHandler("cancel", cancel), CallbackQueryHandler(cancel, pattern='cancel')],
+        fallbacks=[],
     )
 
     app.add_handler(conv_handler)

@@ -3,23 +3,28 @@ import os
 from dotenv import load_dotenv
 import asyncio
 from sqlalchemy.future import select
+from telegram import Bot
+
 from vacancyparse.app.db.database import AsyncSessionLocal
 from vacancyparse.app.db.models import HH, TelegramUser, SJ, MTS
-from telegram.ext import ApplicationBuilder
 from vacancyparse.app.parsers.hh_vacancies import hh_get_vacancies
 from vacancyparse.app.parsers.mts_parser import mts_get_vacancies
 from vacancyparse.app.parsers.super_job_vacancies import sj_get_vacancies
 from vacancyparse.app.repositories.vacancy_saver import save_vacancy
-from vacancyparse.app.schemas.prepare_functions import hh_prepare_vacancies, sj_prepare_vacancies, \
-    mts_prepare_vacancies
+from vacancyparse.app.schemas.prepare_functions import (
+    hh_prepare_vacancies,
+    sj_prepare_vacancies,
+    mts_prepare_vacancies,
+)
 
 load_dotenv()
 
-TG_TOKEN = os.getenv("BOT_TOKEN")
+TG_TOKEN = os.getenv("TG_TOKEN")
 
-async def send_to_telegram(vacancy, application):
-    # Этот метод должен совместим с вашим кодом бота
-    # Пример отправки вакансии всем пользователям
+
+async def send_to_telegram(vacancy):
+    bot = Bot(token=TG_TOKEN)
+
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(TelegramUser))
         users = result.scalars().all()
@@ -28,27 +33,34 @@ async def send_to_telegram(vacancy, application):
 
     for user in users:
         try:
-            await application.bot.send_message(chat_id=int(user.chat_id), text=text)
+            await bot.send_message(chat_id=int(user.chat_id), text=text)
         except Exception as e:
             print(f"Ошибка при отправке пользователю {user.chat_id}: {e}")
 
 
 @shared_task
-def send_unsent_hh_vacancies_task():
+def send_unsent_vacancies_task():
     async def inner():
-        app = ApplicationBuilder().token(TG_TOKEN).build()
-        await app.initialize()  # Инициализация app без polling
-
         async with AsyncSessionLocal() as session:
-            result = await session.execute(select(HH).where(HH.is_sent == False))
-            vacancies = result.scalars().all()
+            # Получаем все вакансии с is_sent=False из трёх таблиц
+            result_hh = await session.execute(select(HH).where(HH.is_sent == False))
+            vacancies_hh = result_hh.scalars().all()
 
-            for vacancy in vacancies:
-                await send_to_telegram(vacancy, app)
+            result_sj = await session.execute(select(SJ).where(SJ.is_sent == False))
+            vacancies_sj = result_sj.scalars().all()
+
+            result_mts = await session.execute(select(MTS).where(MTS.is_sent == False))
+            vacancies_mts = result_mts.scalars().all()
+
+            # Объединяем все вакансии в один список
+            all_vacancies = vacancies_hh + vacancies_sj + vacancies_mts
+
+            # Отправляем всем пользователям каждую новую вакансию
+            for vacancy in all_vacancies:
+                await send_to_telegram(vacancy)
                 vacancy.is_sent = True
-            await session.commit()
 
-        await app.shutdown()
+            await session.commit()
 
     asyncio.run(inner())
 
