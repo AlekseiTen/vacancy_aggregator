@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 
-# Константа с URL для парсинга
 MTS_CAREER_URL = 'https://mts.ai/ru/career/'
 
 def mts_get_vacancies(url=MTS_CAREER_URL):
@@ -16,7 +15,11 @@ def mts_get_vacancies(url=MTS_CAREER_URL):
         title_tag = vacancy.find('div', class_='p-hr__vacancy-title')
         name = title_tag.get_text(strip=True) if title_tag else 'Нет названия'
 
-        # Профессия из атрибута data-profession
+        # Фильтрация: только если в названии есть "python"
+        if "python" not in name.lower():
+            continue
+
+        # Профессия
         profession = vacancy.get('data-profession', 'Нет данных о профессии')
 
         # Ссылка на вакансию

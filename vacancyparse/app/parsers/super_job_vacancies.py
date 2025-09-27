@@ -18,17 +18,18 @@ def sj_get_vacancies():
 
     while True:
         params = {
-            "keywords[0][srws]": 10,
+            "keywords[0][srws]": 1,          # искать только в названии вакансии
             "keywords[0][skwc]": "and",
-            "keywords[0][keys]": "python",
+            "keywords[0][keys]": "python",   # нечувствительно к регистру
             "page": page,
-            "count": 20,  # макс 100
-            "town": "Санкт-Петербург",
+            "count": 20,                     # макс 100
+            "town": 14,                      # Санкт-Петербург
         }
 
         response = requests.get(API_URL, headers=headers, params=params)
 
         if response.status_code != 200:
+            print(f"Ошибка {response.status_code}")
             break
 
         data = response.json()

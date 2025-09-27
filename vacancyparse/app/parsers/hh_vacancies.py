@@ -4,10 +4,10 @@ API_URL = 'https://api.hh.ru/vacancies'
 MAX_PAGES = 100
 PER_PAGE = 20
 
-SEARCH_TEXT = '(python AND (разработчик OR developer)) OR (django OR flask OR fastapi)'
+SEARCH_TEXT = 'python'
 AREA = 2  # Санкт-Петербург
-SCHEDULE = 'remote'
 SEARCH_FIELD = 'name'
+
 
 def hh_get_vacancies():
     page = 0
@@ -16,11 +16,10 @@ def hh_get_vacancies():
     while page < MAX_PAGES:
         params = {
             'text': SEARCH_TEXT,
-            'page': page,
-            'per_page': PER_PAGE,
-            'area': AREA,
-            'schedule': SCHEDULE,
             'search_field': SEARCH_FIELD,
+            'area': AREA,
+            'per_page': PER_PAGE,
+            'page': page,
         }
 
         response = requests.get(API_URL, params=params)
