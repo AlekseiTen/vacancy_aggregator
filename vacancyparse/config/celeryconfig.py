@@ -20,7 +20,7 @@ beat_schedule = {
         'schedule': crontab(minute=0, hour='9,21'),
     },
     'send-twice-daily-after-parse': {
-        'task': 'vacancyparse.app.celery.tasks.send_unsent_hh_vacancies_task',
+        'task': 'vacancyparse.app.celery.tasks.send_unsent_vacancies_task',
         'schedule': crontab(minute=30, hour='9,21'),
     },
     'cleanup_old_vacancies': {
